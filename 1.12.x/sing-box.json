@@ -320,7 +320,7 @@
             "interval": "5m",
             "tolerance": 50
         },
-            {
+        {
             "type": "direct",
             "tag": "🎯 直连"
         }
