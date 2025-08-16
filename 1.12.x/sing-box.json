@@ -156,9 +156,7 @@
         {
             "tag": "🕹 手动切换",
             "type": "selector",
-            "outbounds": [
-                "{all}"
-            ]
+            "outbounds": []
         },
         {
             "tag": "🧿 YouTube",
