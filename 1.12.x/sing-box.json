@@ -380,7 +380,7 @@
             },
             {
                 "ip_is_private": true,
-                "outbound": "direct"
+                "outbound": "🎯 直连"
             },
             {
                 "protocol": "bittorrent",
