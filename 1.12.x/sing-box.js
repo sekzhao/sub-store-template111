@@ -15,6 +15,12 @@ config.outbounds.forEach(outbound => {
     case '🇭🇰 香港节点':
       outbound.outbounds.push(...getTags(proxies, /港|hk|hongkong|🇭🇰/i))
       break
+        case '🇭🇰 香港节点':
+      outbound.outbounds.push(...getTags(proxies, /港|hk|hongkong|🇭🇰/i))
+      break
+    case '🇭🇰 香港节点':
+      outbound.outbounds.push(...getTags(proxies, /港|hk|hongkong|🇭🇰/i))
+      break
     case '🇸🇬 狮城节点':
       outbound.outbounds.push(...getTags(proxies, /sg|singapore|新加坡|狮城|🇸🇬/i))
       break
@@ -29,6 +35,22 @@ config.outbounds.forEach(outbound => {
       break
     case '🇹🇭 泰国节点':
       outbound.outbounds.push(...getTags(proxies, /th|thailand|泰|🇹🇭/i))
+      break
+    
+    // 手动切换分组：所有名字里带 IEPL 的节点
+    case '🕹 手动切换':
+      outbound.outbounds.push(...getTags(proxies, /iepl/i))
+      break
+
+    // 自动测速分组：港台日美新
+    case '⚡ 自动测速':
+      outbound.outbounds.push(
+        ...getTags(proxies, /(港|hk|hongkong|🇭🇰)/i),
+        ...getTags(proxies, /(台|tw|taiwan|🇹🇼)/i),
+        ...getTags(proxies, /(日本|jp|japan|🇯🇵)/i),
+        ...getTags(proxies, /(美|us|united states|america|🇺🇸)/i),
+        ...getTags(proxies, /(新|sg|singapore|🇸🇬)/i)
+      )
       break
   }
 
