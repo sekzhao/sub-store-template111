@@ -315,12 +315,6 @@
         "auto_detect_interface": true,
         "rules": [
             {
-                "wifi_ssid": [
-                    "SSSS"
-                ],
-                "outbound": "🎯 直连"
-            },
-            {
                 "inbound": [
                     "tun-in",
                     "mixed-in"
