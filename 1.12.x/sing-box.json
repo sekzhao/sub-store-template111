@@ -310,7 +310,7 @@
         "default_domain_resolver": {
             "server": "localDns"
         },
-        "final": "♾️ Others",
+        "final": "🌏 国际代理",
         "override_android_vpn": true,
         "auto_detect_interface": true,
         "rules": [
