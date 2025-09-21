@@ -47,9 +47,6 @@
     "final": "google",
     "strategy": "prefer_ipv4",
     "independent_cache": true
-  }
-    "final": "google",
-    "independent_cache": true
   },
   "route": {
     "default_domain_resolver": { "server": "ali" },
@@ -353,4 +350,5 @@
     "timestamp": true
   }
 }
+
 
