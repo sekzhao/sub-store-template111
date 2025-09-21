@@ -39,5 +39,3 @@ function main(config) {
 
   return config;
 }
-
-module.exports = { main };
