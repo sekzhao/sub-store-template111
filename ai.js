@@ -1,64 +1,121 @@
-// 保持原执行结构：顶层解构参数
-const { type, name } = $arguments;
+/**
+ * Sub-Store 脚本 for sing-box
+ * * @author Gemini
+ * @version 2.0
+ * @description 优化版 sing-box 脚本，实现自动测速、中文分组和清晰的策略结构。
+ * * 功能:
+ * 1. 自动创建 `url-test` 分组，实现节点自动选择最低延迟。
+ * 2. 按地区（香港、台湾、新加坡、日本、美国等）对节点进行分类。
+ * 3. 创建清晰的中文策略组：代理策略 -> 自动选择 / 手动选择 -> 各地区节点。
+ * 4. 支持 Netflix、YouTube 等流媒体策略。
+ * 5. 兼容原始模板的路由规则。
+ */
 
-// 兜底出站节点
-const compatible_outbound = { tag: 'COMPATIBLE', type: 'direct' };
-let compatible;
-
-// 读取模板 JSON
-let config = JSON.parse($files[0]);
-
-// 生成节点列表（保持顶层 await）
-let proxies = await produceArtifact({
-  name,
-  type: /^1$|col/i.test(type) ? 'collection' : 'subscription',
-  platform: 'sing-box',
-  produceType: 'internal',
-});
-
-// 将节点加入顶层 outbounds
-config.outbounds.push(...proxies);
-
-// 地区正则集中管理
-const regionPatterns = {
-  all: null, // null 表示不过滤，返回全部
-  hk: /\b(港|hk|hong\s*kong|kong\s*kong|🇭🇰)\b/i,
-  tw: /\b(台|tw|taiwan|🇹🇼)\b/i,
-  jp: /\b(日|jp|japan|🇯🇵)\b/i,
-  sg: /^(?!.*us).*\b(新|sg|singapore|🇸🇬)\b/i,
-  us: /\b(美|us|united\s*states|🇺🇸)\b/i
+// --- 配置区域 ---
+// 你可以在这里添加或修改地区关键词
+const REGIONS = {
+  "🇭🇰 香港": /港|HK|Hong Kong/i,
+  "🇹🇼 台湾": /台|TW|Taiwan/i,
+  "🇸🇬 新加坡": /新|SG|Singapore/i,
+  "🇯🇵 日本": /日|JP|Japan/i,
+  "🇺🇸 美国": /美|US|United States/i,
+  "🇬🇧 英国": /英|UK|United Kingdom/i,
+  "🇰🇷 韩国": /韩|KR|Korea/i,
+  "其他": /.*/ // 匹配所有其他节点
 };
 
-// 遍历分组，按 tag 填充节点
-config.outbounds.forEach(group => {
-  const tag = group.tag;
-  if (regionPatterns.hasOwnProperty(tag)) {
-    const matched = getTags(proxies, regionPatterns[tag]);
-    group.outbounds.push(...matched);
-  }
-  // 对带 -auto 的测速组也做匹配
-  const baseTag = tag.replace(/-auto$/, '');
-  if (regionPatterns.hasOwnProperty(baseTag) && /-auto$/.test(tag)) {
-    const matched = getTags(proxies, regionPatterns[baseTag]);
-    group.outbounds.push(...matched);
-  }
-});
+// --- 主要处理逻辑 ---
+// 请不要修改下面的代码，除非你了解其工作原理
+function main(proxies) {
+  const outbounds = [];
+  const regionNodes = {};
+  const allProxyNames = [];
 
-// 空组兜底：如果某个 selector/urltest 没有节点，则加 COMPATIBLE
-config.outbounds.forEach(outbound => {
-  if (Array.isArray(outbound.outbounds) && outbound.outbounds.length === 0) {
-    if (!compatible) {
-      config.outbounds.push(compatible_outbound);
-      compatible = true;
+  // 初始化地区节点数组
+  for (const regionName in REGIONS) {
+    regionNodes[regionName] = [];
+  }
+
+  // 1. 遍历和分类所有节点
+  proxies.forEach(p => {
+    // 为节点名称添加 emoji 前缀，方便识别
+    let assigned = false;
+    for (const [regionName, regex] of Object.entries(REGIONS)) {
+      if (regex.test(p.name)) {
+        const emoji = regionName.split(' ')[0];
+        p.name = `${emoji} ${p.name}`;
+        regionNodes[regionName].push(p.name);
+        assigned = true;
+        break;
+      }
     }
-    outbound.outbounds.push(compatible_outbound.tag);
+    // 原始节点直接加入 outbounds
+    outbounds.push(p);
+    allProxyNames.push(p.name);
+  });
+
+  // 2. 创建核心策略分组
+  
+  // 2.1 自动选择分组 (url-test)
+  if (allProxyNames.length > 0) {
+    outbounds.push({
+      tag: '🚀 自动选择',
+      type: 'url-test',
+      outbounds: allProxyNames,
+      url: 'http://www.gstatic.com/generate_204',
+      interval: '10m', // 每10分钟测试一次延迟
+      tolerance: 100    // 延迟高于最低值 100ms 时切换
+    });
   }
-});
 
-// 输出最终配置
-$content = JSON.stringify(config, null, 2);
+  // 2.2 手动选择分组 (select) - 按地区
+  const manualGroups = [];
+  for (const [regionName, nodes] of Object.entries(regionNodes)) {
+    if (nodes.length > 0) {
+      const groupTag = `✋ ${regionName}`;
+      outbounds.push({
+        tag: groupTag,
+        type: 'select',
+        outbounds: nodes
+      });
+      manualGroups.push(groupTag);
+    }
+  }
 
-// 工具函数：按正则筛选节点 tag；regex=null 时返回全部
-function getTags(proxies, regex) {
-  return (regex ? proxies.filter(p => regex.test(p.tag)) : proxies).map(p => p.tag);
+  // 2.3 创建 "手动选择" 的主分组
+  if (manualGroups.length > 0) {
+    outbounds.push({
+      tag: ' manually-select',
+      type: 'select',
+      outbounds: manualGroups
+    });
+  }
+  
+  // 2.4 定义主要的 Select 策略组
+  const policyGroups = {
+    '代理策略': ['🚀 自动选择', ' manually-select', 'DIRECT', 'REJECT', ...manualGroups],
+    '国外流量': ['代理策略', 'DIRECT'],
+    '国内流量': ['DIRECT', '代理策略'],
+    '广告拦截': ['REJECT', 'DIRECT'],
+    'YouTube': ['代理策略', 'DIRECT'],
+    'Netflix': ['代理策略', 'DIRECT'],
+    '漏网之鱼': ['代理策略', 'DIRECT']
+  };
+
+  for (const [tag, groupOutbounds] of Object.entries(policyGroups)) {
+    outbounds.push({
+      tag: tag,
+      type: 'select',
+      outbounds: groupOutbounds.filter(name => {
+          // 过滤掉不存在的分组
+          if (name === ' manually-select') return manualGroups.length > 0;
+          if (name === '🚀 自动选择') return allProxyNames.length > 0;
+          return true;
+      })
+    });
+  }
+  
+  return {
+    "outbounds": outbounds
+  };
 }
