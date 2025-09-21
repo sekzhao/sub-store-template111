@@ -33,11 +33,21 @@
       }
     ],
     "rules": [
-      { "clash_mode": "Direct", "action": "route", "server": "ali" },
-      { "clash_mode": "Global", "action": "route", "server": "fakeip" },
-      { "query_type": "HTTPS", "action": "reject" },
-      { "query_type": ["A", "AAAA"], "action": "route", "server": "fakeip", "rewrite_ttl": 1 }
+      {
+        "query_type": "HTTPS",
+        "action": "reject"
+      },
+      {
+        "query_type": ["A", "AAAA"],
+        "action": "route",
+        "server": "fakeip",
+        "rewrite_ttl": 1
+      }
     ],
+    "final": "google",
+    "strategy": "prefer_ipv4",
+    "independent_cache": true
+  }
     "final": "google",
     "independent_cache": true
   },
@@ -343,3 +353,4 @@
     "timestamp": true
   }
 }
+
