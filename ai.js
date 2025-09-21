@@ -1,36 +1,19 @@
-// 获取订阅节点列表（从 url 参数传入）
 let proxies = $proxy
 
-// 初始化配置结构
 let config = {
-  log: {
-    level: "info",
-    timestamp: true
-  },
+  log: { level: "info", timestamp: true },
   dns: {
     servers: [
-      {
-        tag: "阿里DNS",
-        address: "https://dns.alidns.com/dns-query",
-        address_strategy: "prefer_ipv4"
-      },
-      {
-        tag: "CloudflareDNS",
-        address: "https://1.1.1.1/dns-query",
-        address_strategy: "prefer_ipv4"
-      }
+      { tag: "dns-cf", address: "https://1.1.1.1/dns-query", address_strategy: "prefer_ipv4" },
+      { tag: "dns-quad9", address: "https://dns.quad9.net/dns-query", address_strategy: "prefer_ipv4" }
     ],
     rules: [
-      { domain_suffix: "cn", server: "阿里DNS" },
-      { domain_suffix: "com", server: "CloudflareDNS" },
-      { domain_suffix: "net", server: "CloudflareDNS" }
+      { domain_suffix: "google.com", server: "dns-cf" },
+      { domain_suffix: "cn", server: "dns-quad9" }
     ],
     strategy: "ipv4_only",
     independent_cache: true,
-    fakeip: {
-      enabled: true,
-      range: "198.18.0.0/16"
-    },
+    fakeip: { enabled: true, range: "198.18.0.0/16" },
     domain_matcher: "full"
   },
   route: {
