@@ -6,19 +6,20 @@
   "dns": {
     "servers": [
       {
-        "tag": "dns-cf",
-        "address": "https://1.1.1.1/dns-query",
+        "tag": "阿里DNS",
+        "address": "https://dns.alidns.com/dns-query",
         "address_strategy": "prefer_ipv4"
       },
       {
-        "tag": "dns-quad9",
-        "address": "https://dns.quad9.net/dns-query",
+        "tag": "CloudflareDNS",
+        "address": "https://1.1.1.1/dns-query",
         "address_strategy": "prefer_ipv4"
       }
     ],
     "rules": [
-      { "domain_suffix": "google.com", "server": "dns-cf" },
-      { "domain_suffix": "cn", "server": "dns-quad9" }
+      { "domain_suffix": "cn", "server": "阿里DNS" },
+      { "domain_suffix": "com", "server": "CloudflareDNS" },
+      { "domain_suffix": "net", "server": "CloudflareDNS" }
     ],
     "strategy": "ipv4_only",
     "independent_cache": true,
@@ -46,10 +47,10 @@
       }
     ],
     "rules": [
-      { "rule_set": "geosite-cn", "outbound": "direct" },
-      { "rule_set": "geoip-cn", "outbound": "direct" },
-      { "ip_cidr": ["geoip:cn"], "outbound": "direct" },
-      { "ip_cidr": ["geoip:private"], "outbound": "direct" },
+      { "rule_set": "geosite-cn", "outbound": "直连" },
+      { "rule_set": "geoip-cn", "outbound": "直连" },
+      { "ip_cidr": ["geoip:cn"], "outbound": "直连" },
+      { "ip_cidr": ["geoip:private"], "outbound": "直连" },
       { "default": true, "outbound": "🌐全球自动" }
     ],
     "auto_detect_interface": true
