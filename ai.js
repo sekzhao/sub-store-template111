@@ -1,11 +1,11 @@
-// 保留参数注入方式
+// 参数注入：订阅名称与类型
 const { type, name } = $arguments
 
-// 保留兼容节点，用于填充空组
+// 兼容节点，用于填充空组防止配置报错
 const compatible_outbound = { tag: '兼容直连', type: 'direct' }
 let compatible = false
 
-// 读取模板文件（sing-box.json）
+// 读取模板配置文件（ai.json）
 let config = JSON.parse($files[0])
 
 // 获取订阅节点列表
