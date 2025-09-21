@@ -5,16 +5,8 @@
   },
   "dns": {
     "servers": [
-      {
-        "tag": "dns-local",
-        "address": "223.5.5.5",
-        "detour": "direct"
-      },
-      {
-        "tag": "dns-remote",
-        "address": "8.8.8.8",
-        "detour": "proxy"
-      }
+      { "tag": "dns-local", "address": "223.5.5.5", "detour": "direct" },
+      { "tag": "dns-remote", "address": "8.8.8.8", "detour": "proxy" }
     ],
     "rules": [
       { "outbound": "direct", "server": "dns-local" },
@@ -22,10 +14,7 @@
     ],
     "strategy": "ipv4_only",
     "independent_cache": true,
-    "fakeip": {
-      "enabled": true,
-      "range": "198.18.0.0/16"
-    }
+    "fakeip": { "enabled": true, "range": "198.18.0.0/16" }
   },
   "inbounds": [
     {
@@ -41,56 +30,14 @@
     { "tag": "block", "type": "block" },
 
     // ===== 区域自动测速组 =====
-    {
-      "tag": "hk-auto",
-      "type": "urltest",
-      "outbounds": ["hk"],
-      "url": "https://www.gstatic.com/generate_204",
-      "interval": "90s",
-      "tolerance": 50
-    },
-    {
-      "tag": "tw-auto",
-      "type": "urltest",
-      "outbounds": ["tw"],
-      "url": "https://www.gstatic.com/generate_204",
-      "interval": "90s",
-      "tolerance": 50
-    },
-    {
-      "tag": "jp-auto",
-      "type": "urltest",
-      "outbounds": ["jp"],
-      "url": "https://www.gstatic.com/generate_204",
-      "interval": "90s",
-      "tolerance": 50
-    },
-    {
-      "tag": "sg-auto",
-      "type": "urltest",
-      "outbounds": ["sg"],
-      "url": "https://www.gstatic.com/generate_204",
-      "interval": "90s",
-      "tolerance": 50
-    },
-    {
-      "tag": "us-auto",
-      "type": "urltest",
-      "outbounds": ["us"],
-      "url": "https://www.gstatic.com/generate_204",
-      "interval": "90s",
-      "tolerance": 50
-    },
+    { "tag": "hk-auto", "type": "urltest", "outbounds": ["hk"], "url": "https://www.gstatic.com/generate_204", "interval": "90s", "tolerance": 50 },
+    { "tag": "tw-auto", "type": "urltest", "outbounds": ["tw"], "url": "https://www.gstatic.com/generate_204", "interval": "90s", "tolerance": 50 },
+    { "tag": "jp-auto", "type": "urltest", "outbounds": ["jp"], "url": "https://www.gstatic.com/generate_204", "interval": "90s", "tolerance": 50 },
+    { "tag": "sg-auto", "type": "urltest", "outbounds": ["sg"], "url": "https://www.gstatic.com/generate_204", "interval": "90s", "tolerance": 50 },
+    { "tag": "us-auto", "type": "urltest", "outbounds": ["us"], "url": "https://www.gstatic.com/generate_204", "interval": "90s", "tolerance": 50 },
 
     // ===== 顶层自动测速组（只比拼各区域优胜者） =====
-    {
-      "tag": "all-auto",
-      "type": "urltest",
-      "outbounds": ["hk-auto", "tw-auto", "jp-auto", "sg-auto", "us-auto"],
-      "url": "https://www.gstatic.com/generate_204",
-      "interval": "30s",
-      "tolerance": 50
-    },
+    { "tag": "all-auto", "type": "urltest", "outbounds": ["hk-auto", "tw-auto", "jp-auto", "sg-auto", "us-auto"], "url": "https://www.gstatic.com/generate_204", "interval": "30s", "tolerance": 50 },
 
     // ===== 手动选择组（保留全量节点） =====
     { "tag": "hk", "type": "selector", "outbounds": [] },
@@ -100,57 +47,17 @@
     { "tag": "us", "type": "selector", "outbounds": [] },
 
     // ===== 主业务选择器 =====
-    {
-      "tag": "proxy",
-      "type": "selector",
-      "outbounds": ["all-auto", "hk", "tw", "jp", "sg", "us", "direct"]
-    },
-    {
-      "tag": "google",
-      "type": "selector",
-      "outbounds": ["proxy", "direct"]
-    },
-    {
-      "tag": "netflix",
-      "type": "selector",
-      "outbounds": ["proxy", "direct"]
-    },
-    {
-      "tag": "final",
-      "type": "selector",
-      "outbounds": ["proxy", "direct"]
-    }
+    { "tag": "proxy", "type": "selector", "outbounds": ["all-auto", "hk", "tw", "jp", "sg", "us", "direct"] },
+    { "tag": "google", "type": "selector", "outbounds": ["proxy", "direct"] },
+    { "tag": "netflix", "type": "selector", "outbounds": ["proxy", "direct"] },
+    { "tag": "final", "type": "selector", "outbounds": ["proxy", "direct"] }
   ],
   "route": {
     "rule_set": [
-      {
-        "tag": "geosite-google",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite-google.srs",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "geosite-netflix",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite-netflix.srs",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "geosite-cn",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite-cn.srs",
-        "update_interval": "24h"
-      },
-      {
-        "tag": "geoip-cn",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip-cn.srs",
-        "update_interval": "24h"
-      }
+      { "tag": "geosite-google", "type": "remote", "format": "binary", "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite-google.srs", "update_interval": "24h" },
+      { "tag": "geosite-netflix", "type": "remote", "format": "binary", "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite-netflix.srs", "update_interval": "24h" },
+      { "tag": "geosite-cn", "type": "remote", "format": "binary", "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite-cn.srs", "update_interval": "24h" },
+      { "tag": "geoip-cn", "type": "remote", "format": "binary", "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip-cn.srs", "update_interval": "24h" }
     ],
     "rules": [
       { "rule_set": "geosite-google", "outbound": "google" },
