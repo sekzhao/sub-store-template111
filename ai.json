@@ -1,76 +1,132 @@
 {
   "log": {
-    "level": "info",
+    "level": "warn",
     "timestamp": true
   },
   "dns": {
     "servers": [
       {
-        "tag": "阿里DNS",
-        "address": "https://dns.alidns.com/dns-query",
-        "address_strategy": "prefer_ipv4"
+        "tag": "google",
+        "address": "https://dns.google/dns-query",
+        "address_resolver": "system",
+        "detour": "direct"
       },
       {
-        "tag": "CloudflareDNS",
+        "tag": "ali",
+        "address": "https://dns.alidns.com/dns-query",
+        "address_resolver": "system",
+        "detour": "direct"
+      },
+      {
+        "tag": "cloudflare",
         "address": "https://1.1.1.1/dns-query",
-        "address_strategy": "prefer_ipv4"
+        "address_resolver": "system",
+        "detour": "direct"
+      },
+      {
+        "tag": "quad9",
+        "address": "https://9.9.9.9/dns-query",
+        "address_resolver": "system",
+        "detour": "direct"
       }
     ],
     "rules": [
-      { "domain_suffix": "cn", "server": "阿里DNS" },
-      { "domain_suffix": "com", "server": "CloudflareDNS" },
-      { "domain_suffix": "net", "server": "CloudflareDNS" }
+      { "outbound": "direct", "server": "google", "geosite": "cn" },
+      { "outbound": "direct", "server": "ali", "geosite": "cn" },
+      { "outbound": "direct", "server": "cloudflare", "geosite": "geolocation-!cn" },
+      { "outbound": "direct", "server": "quad9", "geosite": "geolocation-!cn" }
     ],
-    "strategy": "ipv4_only",
+    "strategy": "prefer_ipv4",
+    "disable_cache": false,
+    "disable_expire": false,
     "independent_cache": true,
+    "final": "cloudflare",
     "fakeip": {
       "enabled": true,
-      "range": "198.18.0.0/16"
-    },
-    "domain_matcher": "full"
+      "inet4_range": "198.18.0.0/16",
+      "inet6_range": "fc00::/18"
+    }
   },
   "route": {
     "rule_set": [
       {
-        "tag": "geosite-cn",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat",
-        "update_interval": "24h"
-      },
-      {
         "tag": "geoip-cn",
         "type": "remote",
         "format": "binary",
-        "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/Loyalsoldier/geoip/release/CN.ipset",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "geosite-cn",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/Loyalsoldier/domain-list-custom/release/cn.txt",
         "update_interval": "24h"
       }
     ],
     "rules": [
-      { "rule_set": "geosite-cn", "outbound": "直连" },
-      { "rule_set": "geoip-cn", "outbound": "直连" },
-      { "ip_cidr": ["geoip:cn"], "outbound": "直连" },
-      { "ip_cidr": ["geoip:private"], "outbound": "直连" },
-      { "default": true, "outbound": "🌐全球自动" }
+      { "rule_set": "geoip-cn", "outbound": "direct" },
+      { "rule_set": "geosite-cn", "outbound": "direct" }
     ],
-    "auto_detect_interface": true
+    "final": "proxy"
   },
-  "experimental": {
-    "clash_api": {
-      "external_controller": "127.0.0.1:9090",
-      "external_ui": "https://cdn.jsdelivr.net/gh/MetaCubeX/metacubexd@gh-pages",
-      "secret": "your-secret-key"
-    }
-  },
-  "inbounds": [
+  "outbounds": [
     {
-      "type": "mixed",
-      "listen": "127.0.0.1",
-      "listen_port": 7890,
-      "sniff": true,
-      "set_system_proxy": true
+      "tag": "direct",
+      "type": "direct"
+    },
+    {
+      "tag": "block",
+      "type": "block"
+    },
+    {
+      "tag": "COMPATIBLE",
+      "type": "direct"
+    },
+    {
+      "tag": "proxy",
+      "type": "selector",
+      "outbounds": ["hk", "tw", "jp", "sg", "us", "COMPATIBLE"]
+    },
+    {
+      "tag": "hk",
+      "type": "urltest",
+      "outbounds": ["COMPATIBLE"],
+      "url": "https://cp.cloudflare.com",
+      "interval": "5m",
+      "tolerance": 50
+    },
+    {
+      "tag": "tw",
+      "type": "urltest",
+      "outbounds": ["COMPATIBLE"],
+      "url": "https://cp.cloudflare.com",
+      "interval": "5m",
+      "tolerance": 50
+    },
+    {
+      "tag": "jp",
+      "type": "urltest",
+      "outbounds": ["COMPATIBLE"],
+      "url": "https://cp.cloudflare.com",
+      "interval": "5m",
+      "tolerance": 50
+    },
+    {
+      "tag": "sg",
+      "type": "urltest",
+      "outbounds": ["COMPATIBLE"],
+      "url": "https://cp.cloudflare.com",
+      "interval": "5m",
+      "tolerance": 50
+    },
+    {
+      "tag": "us",
+      "type": "urltest",
+      "outbounds": ["COMPATIBLE"],
+      "url": "https://cp.cloudflare.com",
+      "interval": "5m",
+      "tolerance": 50
     }
-  ],
-  "outbounds": {{outbounds}},
-  "proxy_groups": {{proxy_groups}}
+  ]
 }
