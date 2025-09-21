@@ -2,6 +2,14 @@ function main({ proxies }) {
   const regions = ['HK', 'JP', 'US', 'SG', 'TW', 'KR', 'DE', 'FR'];
   const groups = [];
 
+  if (!proxies || proxies.length === 0) {
+    console.log('未检测到任何节点');
+    return {
+      outbounds: [],
+      proxy_groups: []
+    };
+  }
+
   regions.forEach(region => {
     const nodes = proxies.filter(p => p.name.toUpperCase().includes(region));
     if (nodes.length > 0) {
@@ -44,5 +52,8 @@ function main({ proxies }) {
     concurrency: 20
   });
 
-  return { outbounds: proxies, proxy_groups: groups };
+  return {
+    outbounds: proxies,
+    proxy_groups: groups
+  };
 }
