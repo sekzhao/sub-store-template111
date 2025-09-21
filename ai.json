@@ -1,0 +1,76 @@
+{
+  "log": {
+    "level": "info",
+    "timestamp": true
+  },
+  "dns": {
+    "servers": [
+      {
+        "tag": "dns-cf",
+        "address": "https://1.1.1.1/dns-query",
+        "address_strategy": "prefer_ipv4"
+      },
+      {
+        "tag": "dns-quad9",
+        "address": "https://dns.quad9.net/dns-query",
+        "address_strategy": "prefer_ipv4"
+      }
+    ],
+    "rules": [
+      { "domain_suffix": "google.com", "server": "dns-cf" },
+      { "domain_suffix": "cn", "server": "dns-quad9" }
+    ],
+    "strategy": "ipv4_only",
+    "independent_cache": true,
+    "fakeip": {
+      "enabled": true,
+      "range": "198.18.0.0/16"
+    },
+    "domain_matcher": "full"
+  },
+  "route": {
+    "rule_set": [
+      {
+        "tag": "geosite-cn",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "geoip-cn",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat",
+        "update_interval": "24h"
+      }
+    ],
+    "rules": [
+      { "rule_set": "geosite-cn", "outbound": "direct" },
+      { "rule_set": "geoip-cn", "outbound": "direct" },
+      { "ip_cidr": ["geoip:cn"], "outbound": "direct" },
+      { "ip_cidr": ["geoip:private"], "outbound": "direct" },
+      { "default": true, "outbound": "GLOBAL-AUTO" }
+    ],
+    "auto_detect_interface": true
+  },
+  "experimental": {
+    "clash_api": {
+      "external_controller": "127.0.0.1:9090",
+      "external_ui": "https://cdn.jsdelivr.net/gh/MetaCubeX/metacubexd@gh-pages",
+      "secret": "your-secret-key"
+    }
+  },
+  "inbounds": [
+    {
+      "type": "mixed",
+      "listen": "127.0.0.1",
+      "listen_port": 7890,
+      "sniff": true,
+      "set_system_proxy": true
+    }
+  ],
+  "outbounds": [
+    { "type": "direct", "tag": "direct" },
+    { "type": "block", "tag": "block" }
+  ]
