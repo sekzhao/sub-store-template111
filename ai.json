@@ -1,66 +1,93 @@
 {
   "log": {
+    "disabled": false,
     "level": "info",
     "timestamp": true
   },
   "dns": {
     "servers": [
-      { "tag": "dns-local", "address": "223.5.5.5", "detour": "direct" },
-      { "tag": "dns-remote", "address": "8.8.8.8", "detour": "proxy" }
+      {
+        "tag": "dns_proxy",
+        "address": "https://dns.google/dns-query",
+        "detour": "代理策略"
+      },
+      {
+        "tag": "dns_direct",
+        "address": "https://223.5.5.5/dns-query"
+      },
+      {
+        "tag": "dns_block",
+        "address": "rcode://success"
+      }
     ],
     "rules": [
-      { "outbound": "direct", "server": "dns-local" },
-      { "outbound": "proxy", "server": "dns-remote" }
+      {
+        "domain_suffix": [".arpa", "in-addr.arpa", "ip6.arpa"],
+        "server": "dns_block",
+        "disable_cache": true
+      },
+      { "geosite": ["cn", "private"], "server": "dns_direct" },
+      { "geosite": ["gfw", "greatfire"], "server": "dns_proxy" },
+      { "clash_mode": "direct", "server": "dns_direct" },
+      { "clash_mode": "global", "server": "dns_proxy" }
     ],
-    "strategy": "ipv4_only",
-    "independent_cache": true,
-    "fakeip": { "enabled": true, "range": "198.18.0.0/16" }
+    "final": "dns_proxy",
+    "strategy": "ipv4_only"
   },
   "inbounds": [
     {
+      "type": "tun",
+      "tag": "tun-in",
+      "interface_name": "tun0",
+      "inet4_address": "172.19.0.1/30",
+      "mtu": 9000,
+      "auto_route": true,
+      "strict_route": true,
+      "stack": "gvisor",
+      "sniff": true
+    },
+    {
       "type": "mixed",
-      "listen": "::",
-      "listen_port": 7890,
-      "sniff": true,
-      "set_system_proxy": true
+      "tag": "mixed-in",
+      "listen": "0.0.0.0",
+      "listen_port": 2080,
+      "sniff": true
     }
   ],
   "outbounds": [
-    { "tag": "direct", "type": "direct" },
-    { "tag": "block", "type": "block" },
-
-    { "tag": "hk-auto", "type": "urltest", "outbounds": ["hk"], "url": "https://www.gstatic.com/generate_204", "interval": "90s", "tolerance": 50 },
-    { "tag": "tw-auto", "type": "urltest", "outbounds": ["tw"], "url": "https://www.gstatic.com/generate_204", "interval": "90s", "tolerance": 50 },
-    { "tag": "jp-auto", "type": "urltest", "outbounds": ["jp"], "url": "https://www.gstatic.com/generate_204", "interval": "90s", "tolerance": 50 },
-    { "tag": "sg-auto", "type": "urltest", "outbounds": ["sg"], "url": "https://www.gstatic.com/generate_204", "interval": "90s", "tolerance": 50 },
-    { "tag": "us-auto", "type": "urltest", "outbounds": ["us"], "url": "https://www.gstatic.com/generate_204", "interval": "90s", "tolerance": 50 },
-
-    { "tag": "all-auto", "type": "urltest", "outbounds": ["hk-auto", "tw-auto", "jp-auto", "sg-auto", "us-auto"], "url": "https://www.gstatic.com/generate_204", "interval": "30s", "tolerance": 50 },
-
-    { "tag": "hk", "type": "selector", "outbounds": [] },
-    { "tag": "tw", "type": "selector", "outbounds": [] },
-    { "tag": "jp", "type": "selector", "outbounds": [] },
-    { "tag": "sg", "type": "selector", "outbounds": [] },
-    { "tag": "us", "type": "selector", "outbounds": [] },
-
-    { "tag": "proxy", "type": "selector", "outbounds": ["all-auto", "hk", "tw", "jp", "sg", "us", "direct"] },
-    { "tag": "google", "type": "selector", "outbounds": ["proxy", "direct"] },
-    { "tag": "netflix", "type": "selector", "outbounds": ["proxy", "direct"] },
-    { "tag": "final", "type": "selector", "outbounds": ["proxy", "direct"] }
+    {
+      "type": "direct",
+      "tag": "DIRECT"
+    },
+    {
+      "type": "block",
+      "tag": "REJECT"
+    },
+    {
+      "type": "dns",
+      "tag": "dns-out"
+    }
+    // sub-store-managed
+    // 脚本生成的节点和策略组将被插入到这里
   ],
   "route": {
-    "rule_set": [
-      { "tag": "geosite-google", "type": "remote", "format": "binary", "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite-google.srs", "update_interval": "24h" },
-      { "tag": "geosite-netflix", "type": "remote", "format": "binary", "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite-netflix.srs", "update_interval": "24h" },
-      { "tag": "geosite-cn", "type": "remote", "format": "binary", "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite-cn.srs", "update_interval": "24h" },
-      { "tag": "geoip-cn", "type": "remote", "format": "binary", "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip-cn.srs", "update_interval": "24h" }
-    ],
     "rules": [
-      { "rule_set": "geosite-google", "outbound": "google" },
-      { "rule_set": "geosite-netflix", "outbound": "netflix" },
-      { "rule_set": "geosite-cn", "outbound": "direct" },
-      { "rule_set": "geoip-cn", "outbound": "direct" },
-      { "default": true, "outbound": "final" }
-    ]
+      { "protocol": "dns", "outbound": "dns-out" },
+      { "clash_mode": "direct", "outbound": "DIRECT" },
+      { "clash_mode": "global", "outbound": "代理策略" },
+      { "geosite": "private", "outbound": "DIRECT" },
+      { "geosite": "microsoft", "outbound": "DIRECT" },
+      { "geosite": "apple", "outbound": "DIRECT" },
+      { "geosite": "google", "outbound": "代理策略" },
+      { "geosite": "telegram", "outbound": "代理策略" },
+      { "geosite": "netflix", "outbound": "Netflix" },
+      { "geosite": "youtube", "outbound": "YouTube" },
+      { "geosite": "gfw", "outbound": "代理策略" },
+      { "geosite": "cn", "outbound": "国内流量" },
+      { "geoip": "private", "outbound": "DIRECT", "disable_cache": true },
+      { "geoip": "cn", "outbound": "国内流量" }
+    ],
+    "final": "漏网之鱼",
+    "auto_detect_interface": true
   }
 }
