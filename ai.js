@@ -1,23 +1,9 @@
-// 参数注入：订阅名称与类型
-const { type, name } = $arguments
+// 获取订阅节点列表（从 url 参数传入）
+let proxies = $proxy
 
-// 兼容节点，用于填充空组防止配置报错
-const compatible_outbound = { tag: '兼容直连', type: 'direct' }
-let compatible = false
-
-// 读取模板配置文件（ai.json）
-let config = JSON.parse($files[0])
-
-// 获取订阅节点列表
-let proxies = await produceArtifact({
-  name,
-  type: /^1$|col/i.test(type) ? 'collection' : 'subscription',
-  platform: 'sing-box',
-  produceType: 'internal'
-})
-
-// 插入节点到配置中
-config.outbounds.push(...proxies)
+// 初始化输出结构
+let outbounds = [...proxies]
+let proxy_groups = []
 
 // 中文区域分组定义
 const regions = [
@@ -36,8 +22,8 @@ regions.forEach(region => {
   const matched = proxies.filter(p => region.regex.test(p.name))
   const tags = matched.map(p => p.name)
   if (tags.length > 0) {
-    config.proxy_groups.push({ type: 'selector', tag: `${region.tag}手动`, outbounds: tags })
-    config.proxy_groups.push({
+    proxy_groups.push({ type: 'selector', tag: `${region.tag}手动`, outbounds: tags })
+    proxy_groups.push({
       type: 'urltest',
       tag: `${region.tag}自动`,
       outbounds: tags,
@@ -46,7 +32,7 @@ regions.forEach(region => {
       tolerance: 50,
       concurrency: 20
     })
-    config.proxy_groups.push({
+    proxy_groups.push({
       type: 'fallback',
       tag: `${region.tag}容错`,
       outbounds: tags,
@@ -54,7 +40,7 @@ regions.forEach(region => {
       interval: 300,
       concurrency: 20
     })
-    config.proxy_groups.push({
+    proxy_groups.push({
       type: 'load-balance',
       tag: `${region.tag}均衡`,
       outbounds: tags,
@@ -65,7 +51,7 @@ regions.forEach(region => {
 
 // 全局测速组
 const allTags = proxies.map(p => p.name)
-config.proxy_groups.push({
+proxy_groups.push({
   type: 'urltest',
   tag: '🌐全球自动',
   outbounds: allTags,
@@ -76,17 +62,20 @@ config.proxy_groups.push({
 })
 
 // 插入静态出站
-config.outbounds.push({ type: 'direct', tag: '直连' })
-config.outbounds.push({ type: 'block', tag: '拦截' })
+outbounds.push({ type: 'direct', tag: '直连' })
+outbounds.push({ type: 'block', tag: '拦截' })
 
 // 插入兼容节点并填充空组
-config.outbounds.push(compatible_outbound)
-config.proxy_groups.forEach(group => {
+const compatible_outbound = { tag: '兼容直连', type: 'direct' }
+outbounds.push(compatible_outbound)
+proxy_groups.forEach(group => {
   if (Array.isArray(group.outbounds) && group.outbounds.length === 0) {
-    if (!compatible) compatible = true
     group.outbounds.push(compatible_outbound.tag)
   }
 })
 
-// 输出最终配置
-$content = JSON.stringify(config, null, 2)
+// 输出结构供模板插入
+return {
+  outbounds,
+  proxy_groups
+}
