@@ -6,49 +6,45 @@
   "dns": {
     "servers": [
       {
-        "tag": "local",
+        "tag": "dns-local",
         "address": "223.5.5.5",
         "detour": "direct"
       },
       {
-        "tag": "remote",
+        "tag": "dns-remote",
         "address": "8.8.8.8",
         "detour": "proxy"
       }
     ],
     "rules": [
-      {
-        "outbound": "direct",
-        "server": "local"
-      },
-      {
-        "outbound": "proxy",
-        "server": "remote"
-      }
-    ]
+      { "outbound": "direct", "server": "dns-local" },
+      { "outbound": "proxy", "server": "dns-remote" }
+    ],
+    "strategy": "ipv4_only",
+    "independent_cache": true,
+    "fakeip": {
+      "enabled": true,
+      "range": "198.18.0.0/16"
+    }
   },
   "inbounds": [
     {
       "type": "mixed",
       "listen": "::",
-      "listen_port": 7890
+      "listen_port": 7890,
+      "sniff": true,
+      "set_system_proxy": true
     }
   ],
   "outbounds": [
-    {
-      "tag": "direct",
-      "type": "direct"
-    },
-    {
-      "tag": "block",
-      "type": "block"
-    },
+    { "tag": "direct", "type": "direct" },
+    { "tag": "block", "type": "block" },
 
     // ===== 区域自动测速组 =====
     {
       "tag": "hk-auto",
       "type": "urltest",
-      "outbounds": ["hk"], 
+      "outbounds": ["hk"],
       "url": "https://www.gstatic.com/generate_204",
       "interval": "90s",
       "tolerance": 50
@@ -97,31 +93,11 @@
     },
 
     // ===== 手动选择组（保留全量节点） =====
-    {
-      "tag": "hk",
-      "type": "selector",
-      "outbounds": []
-    },
-    {
-      "tag": "tw",
-      "type": "selector",
-      "outbounds": []
-    },
-    {
-      "tag": "jp",
-      "type": "selector",
-      "outbounds": []
-    },
-    {
-      "tag": "sg",
-      "type": "selector",
-      "outbounds": []
-    },
-    {
-      "tag": "us",
-      "type": "selector",
-      "outbounds": []
-    },
+    { "tag": "hk", "type": "selector", "outbounds": [] },
+    { "tag": "tw", "type": "selector", "outbounds": [] },
+    { "tag": "jp", "type": "selector", "outbounds": [] },
+    { "tag": "sg", "type": "selector", "outbounds": [] },
+    { "tag": "us", "type": "selector", "outbounds": [] },
 
     // ===== 主业务选择器 =====
     {
@@ -146,32 +122,42 @@
     }
   ],
   "route": {
-    "rules": [
-      {
-        "rule_set": "geosite-google",
-        "outbound": "google"
-      },
-      {
-        "rule_set": "geosite-netflix",
-        "outbound": "netflix"
-      },
-      {
-        "outbound": "final"
-      }
-    ],
     "rule_set": [
       {
         "tag": "geosite-google",
         "type": "remote",
         "format": "binary",
-        "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite-google.srs"
+        "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite-google.srs",
+        "update_interval": "24h"
       },
       {
         "tag": "geosite-netflix",
         "type": "remote",
         "format": "binary",
-        "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite-netflix.srs"
+        "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite-netflix.srs",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "geosite-cn",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite-cn.srs",
+        "update_interval": "24h"
+      },
+      {
+        "tag": "geoip-cn",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip-cn.srs",
+        "update_interval": "24h"
       }
+    ],
+    "rules": [
+      { "rule_set": "geosite-google", "outbound": "google" },
+      { "rule_set": "geosite-netflix", "outbound": "netflix" },
+      { "rule_set": "geosite-cn", "outbound": "direct" },
+      { "rule_set": "geoip-cn", "outbound": "direct" },
+      { "default": true, "outbound": "final" }
     ]
   }
 }
