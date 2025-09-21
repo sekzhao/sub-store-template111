@@ -36,8 +36,7 @@
       { "clash_mode": "Direct", "action": "route", "server": "ali" },
       { "clash_mode": "Global", "action": "route", "server": "fakeip" },
       { "query_type": "HTTPS", "action": "reject" },
-      { "query_type": ["A", "AAAA"], "action": "route", "server": "fakeip", "rewrite_ttl": 1 },
-      { "rule_set": "cn_domain", "action": "route", "server": "ali" }
+      { "query_type": ["A", "AAAA"], "action": "route", "server": "fakeip", "rewrite_ttl": 1 }
     ],
     "final": "google",
     "independent_cache": true
@@ -185,89 +184,67 @@
     {
       "tag": "proxy",
       "type": "selector",
-      "outbounds": [
-        "hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto","direct"
-      ],
+      "outbounds": ["hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto","direct"],
       "default": "all-auto"
     },
     {
       "tag": "google",
       "type": "selector",
-      "outbounds": [
-        "proxy","direct","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"
-      ],
+      "outbounds": ["proxy","direct","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"],
       "default": "proxy"
     },
     {
       "tag": "apple",
       "type": "selector",
-      "outbounds": [
-        "proxy","direct","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"
-      ],
+      "outbounds": ["proxy","direct","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"],
       "default": "direct"
     },
     {
       "tag": "telegram",
       "type": "selector",
-      "outbounds": [
-        "proxy","direct","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"
-      ],
+      "outbounds": ["proxy","direct","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"],
       "default": "proxy"
     },
     {
       "tag": "bilibili",
       "type": "selector",
-      "outbounds": [
-        "proxy","direct","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"
-      ],
+      "outbounds": ["proxy","direct","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"],
       "default": "direct"
     },
     {
       "tag": "netflix",
       "type": "selector",
-      "outbounds": [
-        "proxy","direct","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"
-      ],
+      "outbounds": ["proxy","direct","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"],
       "default": "proxy"
     },
     {
       "tag": "bahamut",
       "type": "selector",
-      "outbounds": [
-        "proxy","direct","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"
-      ],
+      "outbounds": ["proxy","direct","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"],
       "default": "proxy"
     },
     {
       "tag": "youtube",
       "type": "selector",
-      "outbounds": [
-        "proxy","direct","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"
-      ],
+      "outbounds": ["proxy","direct","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"],
       "default": "proxy"
     },
     {
       "tag": "openai",
       "type": "selector",
-      "outbounds": [
-        "proxy","direct","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"
-      ],
+      "outbounds": ["proxy","direct","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"],
       "default": "proxy"
     },
     {
       "tag": "cn",
       "type": "selector",
-      "outbounds": [
-        "proxy","direct","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"
-      ],
+      "outbounds": ["proxy","direct","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"],
       "default": "direct"
     },
     {
       "tag": "final",
       "type": "selector",
-      "outbounds": [
-        "proxy","direct","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"
-      ],
+      "outbounds": ["proxy","direct","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"],
       "default": "proxy"
     },
     { "tag": "hk", "type": "selector", "outbounds": [] },
@@ -327,9 +304,7 @@
     {
       "tag": "GLOBAL",
       "type": "selector",
-      "outbounds": [
-        "direct","proxy","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"
-      ],
+      "outbounds": ["direct","proxy","hk","hk-auto","tw","tw-auto","jp","jp-auto","sg","sg-auto","us","us-auto","all","all-auto"],
       "default": "direct"
     },
     { "tag": "direct", "type": "direct" }
