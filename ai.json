@@ -70,8 +70,6 @@
       "set_system_proxy": true
     }
   ],
-  "outbounds": [
-    { "type": "direct", "tag": "direct" },
-    { "type": "block", "tag": "block" }
-  ]
+  "outbounds": [],
+  "proxy_groups": []
 }
