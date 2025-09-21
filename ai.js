@@ -1,73 +1,64 @@
-function main() {
-  var type = $arguments.type;
-  var name = $arguments.name;
-  var compatible_outbound = { tag: "COMPATIBLE", type: "direct" };
-  var config = JSON.parse($files[0]);
+// 保持原执行结构：顶层解构参数
+const { type, name } = $arguments;
 
-  // 从订阅/集合生成节点列表
-  produceArtifact({
-    name: name,
-    type: /^1$|col/i.test(type) ? "collection" : "subscription",
-    platform: "sing-box",
-    produceType: "internal"
-  }).then(function(proxies) {
-    var outbounds = config.outbounds || [];
+// 兜底出站节点
+const compatible_outbound = { tag: 'COMPATIBLE', type: 'direct' };
+let compatible;
 
-    // 确保 COMPATIBLE 存在
-    var hasCompatible = false;
-    for (var i = 0; i < outbounds.length; i++) {
-      if (outbounds[i].tag === "COMPATIBLE") {
-        hasCompatible = true;
-        break;
-      }
+// 读取模板 JSON
+let config = JSON.parse($files[0]);
+
+// 生成节点列表（保持顶层 await）
+let proxies = await produceArtifact({
+  name,
+  type: /^1$|col/i.test(type) ? 'collection' : 'subscription',
+  platform: 'sing-box',
+  produceType: 'internal',
+});
+
+// 将节点加入顶层 outbounds
+config.outbounds.push(...proxies);
+
+// 地区正则集中管理
+const regionPatterns = {
+  all: null, // null 表示不过滤，返回全部
+  hk: /\b(港|hk|hong\s*kong|kong\s*kong|🇭🇰)\b/i,
+  tw: /\b(台|tw|taiwan|🇹🇼)\b/i,
+  jp: /\b(日|jp|japan|🇯🇵)\b/i,
+  sg: /^(?!.*us).*\b(新|sg|singapore|🇸🇬)\b/i,
+  us: /\b(美|us|united\s*states|🇺🇸)\b/i
+};
+
+// 遍历分组，按 tag 填充节点
+config.outbounds.forEach(group => {
+  const tag = group.tag;
+  if (regionPatterns.hasOwnProperty(tag)) {
+    const matched = getTags(proxies, regionPatterns[tag]);
+    group.outbounds.push(...matched);
+  }
+  // 对带 -auto 的测速组也做匹配
+  const baseTag = tag.replace(/-auto$/, '');
+  if (regionPatterns.hasOwnProperty(baseTag) && /-auto$/.test(tag)) {
+    const matched = getTags(proxies, regionPatterns[baseTag]);
+    group.outbounds.push(...matched);
+  }
+});
+
+// 空组兜底：如果某个 selector/urltest 没有节点，则加 COMPATIBLE
+config.outbounds.forEach(outbound => {
+  if (Array.isArray(outbound.outbounds) && outbound.outbounds.length === 0) {
+    if (!compatible) {
+      config.outbounds.push(compatible_outbound);
+      compatible = true;
     }
-    if (!hasCompatible) {
-      outbounds.push(compatible_outbound);
-    }
+    outbound.outbounds.push(compatible_outbound.tag);
+  }
+});
 
-    // 地区正则
-    var regionPatterns = {
-      hk: /(港|hk|hong\s*kong|kong\s*kong|🇭🇰)/i,
-      tw: /(台|tw|taiwan|🇹🇼)/i,
-      jp: /(日|jp|japan|🇯🇵)/i,
-      sg: /^(?!.*us).*(新|sg|singapore|🇸🇬)/i,
-      us: /(美|us|united\s*states|🇺🇸)/i
-    };
+// 输出最终配置
+$content = JSON.stringify(config, null, 2);
 
-    // 获取匹配的节点标签
-    function getTags(pattern) {
-      var result = [];
-      for (var j = 0; j < proxies.length; j++) {
-        if (pattern.test(proxies[j].tag)) {
-          result.push(proxies[j].tag);
-        }
-      }
-      return result;
-    }
-
-    // 填充地区组
-    for (var region in regionPatterns) {
-      for (var k = 0; k < outbounds.length; k++) {
-        if (outbounds[k].tag === region) {
-          var matched = getTags(regionPatterns[region]);
-          outbounds[k].outbounds = matched.length ? matched : ["COMPATIBLE"];
-        }
-      }
-    }
-
-    // proxy 主组包含所有地区 + 兜底
-    for (var m = 0; m < outbounds.length; m++) {
-      if (outbounds[m].tag === "proxy") {
-        var allRegions = [];
-        for (var r in regionPatterns) {
-          allRegions.push(r);
-        }
-        allRegions.push("COMPATIBLE");
-        outbounds[m].outbounds = allRegions;
-      }
-    }
-
-    config.outbounds = outbounds;
-    $content = JSON.stringify(config, null, 2);
-  });
+// 工具函数：按正则筛选节点 tag；regex=null 时返回全部
+function getTags(proxies, regex) {
+  return (regex ? proxies.filter(p => regex.test(p.tag)) : proxies).map(p => p.tag);
 }
