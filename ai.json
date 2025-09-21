@@ -70,6 +70,6 @@
       "set_system_proxy": true
     }
   ],
-  "outbounds": [],
-  "proxy_groups": []
+  "outbounds": {{outbounds}},
+  "proxy_groups": {{proxy_groups}}
 }
