@@ -1,93 +1,36 @@
 {
-  "log": {
-    "disabled": false,
-    "level": "info",
-    "timestamp": true
-  },
-  "dns": {
-    "servers": [
-      {
-        "tag": "dns_proxy",
-        "address": "https://dns.google/dns-query",
-        "detour": "代理策略"
-      },
-      {
-        "tag": "dns_direct",
-        "address": "https://223.5.5.5/dns-query"
-      },
-      {
-        "tag": "dns_block",
-        "address": "rcode://success"
-      }
-    ],
-    "rules": [
-      {
-        "domain_suffix": [".arpa", "in-addr.arpa", "ip6.arpa"],
-        "server": "dns_block",
-        "disable_cache": true
-      },
-      { "geosite": ["cn", "private"], "server": "dns_direct" },
-      { "geosite": ["gfw", "greatfire"], "server": "dns_proxy" },
-      { "clash_mode": "direct", "server": "dns_direct" },
-      { "clash_mode": "global", "server": "dns_proxy" }
-    ],
-    "final": "dns_proxy",
-    "strategy": "ipv4_only"
-  },
+  "log": { "level": "warning" },
   "inbounds": [
     {
-      "type": "tun",
-      "tag": "tun-in",
-      "interface_name": "tun0",
-      "inet4_address": "172.19.0.1/30",
-      "mtu": 9000,
-      "auto_route": true,
-      "strict_route": true,
-      "stack": "gvisor",
-      "sniff": true
-    },
-    {
       "type": "mixed",
-      "tag": "mixed-in",
-      "listen": "0.0.0.0",
-      "listen_port": 2080,
+      "tag": "main-in",
+      "listen": "::",
+      "listen_port": 20111,
       "sniff": true
     }
   ],
   "outbounds": [
     {
       "type": "direct",
-      "tag": "DIRECT"
+      "tag": "direct"
     },
     {
       "type": "block",
-      "tag": "REJECT"
+      "tag": "block"
     },
+    // 占位符 (实际由js填充)
     {
-      "type": "dns",
-      "tag": "dns-out"
+      "type": "dynamic",
+      "tag": "dynamic-proxy"
     }
-    // sub-store-managed
-    // 脚本生成的节点和策略组将被插入到这里
   ],
   "route": {
     "rules": [
-      { "protocol": "dns", "outbound": "dns-out" },
-      { "clash_mode": "direct", "outbound": "DIRECT" },
-      { "clash_mode": "global", "outbound": "代理策略" },
-      { "geosite": "private", "outbound": "DIRECT" },
-      { "geosite": "microsoft", "outbound": "DIRECT" },
-      { "geosite": "apple", "outbound": "DIRECT" },
-      { "geosite": "google", "outbound": "代理策略" },
-      { "geosite": "telegram", "outbound": "代理策略" },
-      { "geosite": "netflix", "outbound": "Netflix" },
-      { "geosite": "youtube", "outbound": "YouTube" },
-      { "geosite": "gfw", "outbound": "代理策略" },
-      { "geosite": "cn", "outbound": "国内流量" },
-      { "geoip": "private", "outbound": "DIRECT", "disable_cache": true },
-      { "geoip": "cn", "outbound": "国内流量" }
+      {
+        "geosite": ["cn"],
+        "outbound": "direct"
+      }
     ],
-    "final": "漏网之鱼",
     "auto_detect_interface": true
   }
 }
