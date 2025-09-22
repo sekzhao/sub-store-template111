@@ -1,57 +1,68 @@
-// 加载远程配置功能 (需 Sub-Store 支持)
-const remoteConfigLoader = async (url) => {
-  try {
-    const response = await $http.get({ url });
-    return response.data;
-  } catch (e) {
-    $notification.post("配置加载失败", `${e.message}`, "");
-    throw new Error("Remote config fetch failed");
-  }
-};
+// 强力订阅解析器 (sing-box 格式专用)
+const MAIN_TAG = "dynamic-proxy"; // 主配置标识
 
-// URL 参数解析器
-function parseUrlParams() {
-  const hash = $request.url.split("#")[1] || "";
-  return Object.fromEntries(
-    hash.split("&").map(pair => {
-      const [key, value] = pair.split("=");
-      return [key, decodeURIComponent(value)];
-    })
-  );
+// 远程订阅加载器
+async function fetchRemoteConfig(url) {
+  try {
+    const start = Date.now();
+    const resp = await $http.get({ url, timeout: 5000 });
+    $notification.post('订阅加载', `成功获取${url}`, `耗时 ${Date.now() - start}ms`);
+    return resp.data;
+  } catch (e) {
+    $notification.post('订阅加载失败', e.message, url);
+    throw new Error(`[FETCH ERROR] ${e}`);
+  }
+}
+
+// sing-box 配置验证器
+function validateConfig(config) {
+  const mustKeys = ['outbounds', 'route'];
+  if (!mustKeys.every(k => config.hasOwnProperty(k))) {
+    throw new Error('无效的 sing-box 格式订阅');
+  }
+  return config;
 }
 
 // 主处理流程
 async function handle() {
-  // 从 URL 参数获取订阅地址
-  const params = parseUrlParams(); 
-  const subUrl = params.url || $arguments.url;
+  // 1. 参数解析
+  const urlParams = new URLSearchParams($request.url.split('#')[1] || '');
+  const subUrl = urlParams.get('url');
 
   if (!subUrl) {
-    throw new Error("订阅URL参数缺失，请使用#url=your_subscribe_link");
+    throw new Error('URL参数必须包含 #url=订阅链接');
   }
 
-  // 获取并处理远程订阅
-  const remoteConfig = await remoteConfigLoader(subUrl);
-  
-  // 转换逻辑示例
-  const outbounds = remoteConfig.proxies.map(proxy => ({
-    type: proxy.type,
-    tag: proxy.name,
-    server: proxy.server,
-    port: proxy.port,
-    uuid: proxy.uuid || "",
-    tls: proxy.tls ? { enabled: true } : null
-  }));
+  // 2. 获取远程配置
+  const remoteConfig = validateConfig(await fetchRemoteConfig(subUrl));
 
-  // 合并本地模板
-  return {
-    ...$json,
+  // 3. 合并配置模板
+  const finalConfig = {
+    ...$json,  // 基础模板
     outbounds: [
-      ...outbounds,
-      { type: "direct", tag: "DIRECT" }
-    ]
+      // 保留模板中的默认出站
+      ...$json.outbounds.filter(o => o.tag !== MAIN_TAG), 
+      // 注入远程配置
+      ...remoteConfig.outbounds.map(proxy => ({
+        ...proxy,
+        tag: `${MAIN_TAG}-${proxy.tag}`
+      }))
+    ],
+    route: {
+      ...$json.route,
+      rules: [
+        ...$json.route.rules,
+        // 自动生成规则：所有流量走动态代理
+        {
+          protocol: ["tcp", "udp"],
+          outbound: `${MAIN_TAG}-${remoteConfig.outbounds[0].tag}`
+        }
+      ]
+    }
   };
+
+  return finalConfig;
 }
 
 // 执行入口
-handle().then(res => $done(res)).catch(e => $done({ error: e.message }));
+handle().then($done).catch(e => $done({ error: e.message }));
